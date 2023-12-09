@@ -14,6 +14,10 @@
 #define SSID "Programming" // Change to your WiFi SSID 2.4Ghz
 #define PASSWORD "Panda1234" // Change to your WiFi Password
 
+#define URL_FIRMWARE "https://raw.githubusercontent.com/Dotpakc/NanitINd2_ESP_OTA_HTTPS/main/firmware/firmware.json"
+
+
+
 const char* rootCACertificate PROGMEM = \
     "-----BEGIN CERTIFICATE-----\n" \
     "MIIHEjCCBfqgAwIBAgIQBE1y13zdpwLdWmfyoju92TANBgkqhkiG9w0BAQsFADBP\n" \
@@ -81,7 +85,7 @@ void init_wifi() {
     // client -> setInsecure();
     HTTPClient https;
     Serial.print("[HTTPS] begin...\n");
-    if (https.begin(*client, "https://raw.githubusercontent.com/lucadentella/esp32-tutorial/master/README.md")) {  // HTTPS
+    if (https.begin(*client, "URL_FIRMWARE")) {  // HTTPS
       Serial.print("[HTTPS] GET...\n");
       // start connection and send HTTP header
       int httpCode = https.GET();
