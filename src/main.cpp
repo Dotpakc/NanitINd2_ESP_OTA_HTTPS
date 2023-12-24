@@ -19,7 +19,7 @@
 #define PASSWORD "Panda1234" // Change to your WiFi Password
 
 
-#define CURRENT_VERSION "0.3"
+#define CURRENT_VERSION "0.4"
 
 #define URL_FIRMWARE "https://raw.githubusercontent.com/Dotpakc/NanitINd2_ESP_OTA_HTTPS/main/firmware/firmware.json"
 
@@ -156,7 +156,7 @@ void setup() {
 
 void loop() {
 
-  Serial.println("Loop");
+  Serial.println("Loop New");
   delay(1000);
   
 
