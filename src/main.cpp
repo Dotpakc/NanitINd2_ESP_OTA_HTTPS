@@ -7,6 +7,9 @@
 //WiFi
 #include <WiFi.h>
 
+//Json
+#include <ArduinoJson.h>
+
 //OTA
 #include <HTTPClient.h>
 #include <esp_https_ota.h>
@@ -15,10 +18,13 @@
 #define SSID "Programming" // Change to your WiFi SSID 2.4Ghz
 #define PASSWORD "Panda1234" // Change to your WiFi Password
 
+
+#define CURRENT_VERSION "0.1"
+
 #define URL_FIRMWARE "https://raw.githubusercontent.com/Dotpakc/NanitINd2_ESP_OTA_HTTPS/main/firmware/firmware.json"
 
 
-const char TELEGRAM_CERTIFICATE_ROOT[] = R"=EOF=(
+const char CERTIFICATE_ROOT[] = R"=EOF=(
 -----BEGIN CERTIFICATE-----
 MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
@@ -43,6 +49,50 @@ CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
 -----END CERTIFICATE-----
 )=EOF=";
 
+// strcmp(version, CURRENT_VERSION) - сравнение версий якщо 0 то версии одинаковые
+
+void check_update(String payload){
+  DynamicJsonDocument doc(1024);
+  deserializeJson(doc, payload);
+  const char* version = doc["version"];
+  const char* url = doc["link"];
+
+  Serial.print("New version: ");
+  Serial.println(version);
+  Serial.print("current version: ");
+  Serial.println(CURRENT_VERSION);
+
+  Serial.print("URL: ");
+  Serial.println(url);
+
+  if (strcmp(version, CURRENT_VERSION) == 0) {
+    Serial.println("No new version");
+  } else {
+    Serial.println("New version available");
+    Serial.println("Start update");
+
+    esp_http_client_config_t config = {
+      .url = url,
+      .cert_pem = (char *) CERTIFICATE_ROOT,
+    };
+
+    esp_err_t ret = esp_https_ota(&config);
+    
+    if (ret == ESP_OK) {
+        Serial.println("Firmware Upgrades Successfully");
+        delay(5000);
+        Serial.println("Now Curent Version: ");
+        Serial.println(version);
+        esp_restart();
+    } else {
+        Serial.print("Error code: ");
+        Serial.println(ret);
+        Serial.println("Firmware Upgrades Failed");
+        Serial.println("Now Curent Version: ");
+        Serial.println(CURRENT_VERSION);
+    }
+  }
+}
 
 
 
@@ -54,23 +104,10 @@ void init_wifi() {
   delay(5000);
   Serial.println("Start OTA");
   
-  // esp_http_client_config_t config = {
-  //    .url = "https://raw.githubusercontent.com/Dotpakc/NanitINd2_ESP_OTA_HTTPS/main/firmware/firmware.bin",
-  //    .cert_pem = (char *) rootCACertificate,
-  // };
-
-  // esp_err_t ret = esp_https_ota(&config);
-  // if (ret == ESP_OK) {
-  //     Serial.println("Firmware Upgrades Successfully");
-  //     delay(5000);
-  //     esp_restart();
-  // } else {
-  //     Serial.println("Firmware Upgrades Failed");
-  // }
 
   WiFiClientSecure *client = new WiFiClientSecure;
   if(client) {
-    client -> setCACert(TELEGRAM_CERTIFICATE_ROOT);
+    client -> setCACert(CERTIFICATE_ROOT);
     // client -> setCACert(rootCACertificate);
     // client -> setInsecure();
     HTTPClient https;
@@ -88,6 +125,8 @@ void init_wifi() {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
           String payload = https.getString();
           Serial.println(payload);
+          // Check if there is a new version
+          check_update(payload);
         }
       } else {
         Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
@@ -100,18 +139,25 @@ void init_wifi() {
   } else {
     Serial.println("Unable to create client");
 
-
+  Serial.println("End OTA");
 };
 
-
+Serial.println("ALL Complete");
 }
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Start");
+  Serial.print("Current version: ");
+  Serial.println(CURRENT_VERSION);
   init_wifi();
+  
 }
 
 void loop() {
 
+  Serial.println("Loop");
+  delay(1000);
+  
 
 }
